@@ -73,7 +73,7 @@ impl Studio {
             .collect();
         Self {
             voice: Voice::default(), mode: Mode::Formant, vowel: Vowel::A,
-            text: "Hola mundo".into(), saved, samples: Vec::new(),
+            text: "Hello world".into(), saved, samples: Vec::new(),
             status: "Choose a sound, then select Render & play.".into(),
             json_editor: String::new(), show_json: false, continuous_preview: false,
         }
@@ -238,8 +238,8 @@ impl eframe::App for Studio {
                 Mode::Speech => {
                     ui.label("Text-to-sound / phonetic demonstrator");
                     ui.add(egui::TextEdit::multiline(&mut self.text)
-                        .desired_rows(2).hint_text("Try: Hola mundo / mamá / hello"));
-                    ui.label(RichText::new("Experimental orthographic rules. Speech may be unclear, particularly for consonants and English.").small().color(Color32::from_rgb(197, 137, 74)));
+                        .desired_rows(2).hint_text("Try: Hello world / voice / hello"));
+                    ui.label(RichText::new("Experimental English text-to-sound rules. Not yet reliable intelligible speech, especially for consonants.").small().color(Color32::from_rgb(197, 137, 74)));
                 }
                 Mode::Formant | Mode::Singing => {
                     ui.label("Select a sustained vowel");
