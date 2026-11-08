@@ -1,0 +1,9 @@
+[package]
+name = "voxanth-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Pure Rust exploratory formant and vocal-source synthesizer"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
