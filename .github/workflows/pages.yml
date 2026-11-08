@@ -30,6 +30,44 @@ jobs:
           tool: trunk@0.21.14
       - name: Build egui/WASM site
         run: trunk build --release --public-url /voxanth/
+      - name: Check browser JavaScript syntax
+        run: |
+          node --check fallback.js
+          node --check crates/voxanth-studio/src/audio_bridge.js
+      - name: Install Chrome for browser smoke tests
+        id: chrome
+        uses: browser-actions/setup-chrome@v2
+      - name: Smoke-test real Rust/WASM in browser without WebGL
+        env:
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/voxanth-preview/voxanth
+          cp -a dist/. /tmp/voxanth-preview/voxanth/
+          python3 -m http.server 8876 --bind 127.0.0.1 --directory /tmp/voxanth-preview > /tmp/voxanth-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID"' EXIT
+          for attempt in 1 2 3 4 5; do
+            curl -fsS http://127.0.0.1:8876/voxanth/ >/dev/null && break
+            sleep 1
+          done
+          "$CHROME_BIN" --headless=new --no-sandbox --disable-dev-shm-usage \
+            --disable-gpu --disable-webgl --virtual-time-budget=15000 \
+            --dump-dom "http://127.0.0.1:8876/voxanth/?voxanth-smoke=1" \
+            > /tmp/voxanth-browser.html 2>/tmp/voxanth-chrome.log || {
+              cat /tmp/voxanth-chrome.log
+              exit 1
+            }
+          grep -q 'data-voxanth-smoke="passed"' /tmp/voxanth-browser.html || {
+            echo "FAIL: Rust DSP sample generation did not run in Chrome"
+            tail -90 /tmp/voxanth-browser.html
+            exit 1
+          }
+          grep -q 'data-voxanth-studio="compatibility"' /tmp/voxanth-browser.html || {
+            echo "FAIL: no-WebGL compatibility UI never became visible"
+            tail -90 /tmp/voxanth-browser.html
+            exit 1
+          }
       - name: Configure Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5

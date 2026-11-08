@@ -18,26 +18,92 @@ extern "C" {
     fn save_profiles(profiles: &str);
     #[wasm_bindgen(js_name = isDarkMode)]
     fn is_dark_mode() -> bool;
+    #[wasm_bindgen(js_name = markStudioReady)]
+    fn mark_studio_ready();
+    #[wasm_bindgen(js_name = reportStudioError)]
+    fn report_studio_error(message: &str);
+}
+
+/// The sound engine remains available when a browser has no WebGL2; the
+/// page can then show accessible HTML controls backed by this same Rust DSP.
+#[wasm_bindgen]
+pub fn render_preview(
+    mode: &str,
+    vowel: &str,
+    text: &str,
+    pitch_hz: f32,
+    formant_scale: f32,
+    brightness: f32,
+    breathiness: f32,
+    nasality: f32,
+    vibrato: f32,
+    speed: f32,
+) -> Vec<f32> {
+    let mut voice = Voice::default();
+    voice.pitch_hz = pitch_hz;
+    voice.formant_scale = formant_scale;
+    voice.brightness = brightness;
+    voice.breathiness = breathiness;
+    voice.nasality = nasality;
+    voice.vibrato = vibrato;
+    voice.speed = speed;
+    let voice = voice.sanitized();
+    let vowel = match vowel.to_ascii_lowercase().as_str() {
+        "e" => Vowel::E, "i" => Vowel::I, "o" => Vowel::O, "u" => Vowel::U,
+        _ => Vowel::A,
+    };
+    match mode {
+        "speech" => render_speech(&voice, text),
+        "singing" => render_singing(&voice, vowel, 1.4),
+        _ => render_vowel(&voice, vowel, 0.9),
+    }
 }
 
 #[wasm_bindgen(start)]
 pub fn start() {
     wasm_bindgen_futures::spawn_local(async {
-        let Some(window) = web_sys::window() else { return };
-        let Some(document) = window.document() else { return };
-        let Some(canvas) = document
-            .get_element_by_id("voxanth-canvas")
+        let Some(window) = web_sys::window() else {
+            report_studio_error("The browser window is unavailable.");
+            return;
+        };
+        let Some(document) = window.document() else {
+            report_studio_error("The browser document is unavailable.");
+            return;
+        };
+        let Some(canvas) = document.get_element_by_id("voxanth-canvas")
             .and_then(|e| e.dyn_into::<web_sys::HtmlCanvasElement>().ok())
-        else { return };
-        let runner = eframe::WebRunner::new();
-        if let Err(error) = runner
-            .start(canvas, eframe::WebOptions::default(), Box::new(|_| Ok(Box::new(Studio::new()))))
-            .await
-        {
-            web_sys::console::error_1(&error);
+        else {
+            report_studio_error("The studio canvas was not found.");
+            return;
+        };
+
+        // Probe a *separate* canvas: do not lock the real egui canvas to
+        // different WebGL context attributes before eframe initializes.
+        let webgl2 = document.create_element("canvas").ok()
+            .and_then(|el| el.dyn_into::<web_sys::HtmlCanvasElement>().ok())
+            .and_then(|probe| probe.get_context("webgl2").ok().flatten())
+            .is_some();
+        if !webgl2 {
+            report_studio_error("WebGL2 is unavailable; using compatibility controls with the same Rust synthesis engine.");
+            return;
         }
-        // The browser owns the frame lifecycle after initialization.
-        std::mem::forget(runner);
+
+        let runner = eframe::WebRunner::new();
+        match runner.start(
+            canvas,
+            eframe::WebOptions::default(),
+            Box::new(|_| Ok(Box::new(Studio::new()))),
+        ).await {
+            Ok(()) => {
+                // WebRunner needs to live for the lifetime of the page.
+                std::mem::forget(runner);
+            }
+            Err(err) => {
+                let description = format!("egui could not initialize: {err:?}");
+                web_sys::console::error_1(&JsValue::from_str(&description));
+                report_studio_error(&description);
+            }
+        }
     });
 }
 
@@ -61,6 +127,7 @@ struct Studio {
     json_editor: String,
     show_json: bool,
     continuous_preview: bool,
+    first_frame: bool,
 }
 
 impl Studio {
@@ -76,6 +143,7 @@ impl Studio {
             text: "Hello world".into(), saved, samples: Vec::new(),
             status: "Choose a sound, then select Render & play.".into(),
             json_editor: String::new(), show_json: false, continuous_preview: false,
+            first_frame: true,
         }
     }
 
@@ -221,6 +289,10 @@ impl Studio {
 
 impl eframe::App for Studio {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        if self.first_frame {
+            self.first_frame = false;
+            mark_studio_ready();
+        }
         let visuals = if is_dark_mode() { egui::Visuals::dark() } else { egui::Visuals::light() };
         ui.ctx().set_visuals(visuals);
         egui::ScrollArea::vertical().id_salt("voxanth-studio-scroll").show(ui, |ui| {

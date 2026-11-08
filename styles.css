@@ -150,3 +150,31 @@ h2 { font-size: clamp(46px, 5vw, 76px); margin: 0; }
  html { scroll-behavior: auto; }
  .button { transition: none; }
 }
+
+
+/* Functional no-WebGL controls: remain usable when eframe cannot draw. */
+#studio-loading[hidden], #studio-fallback[hidden], #voxanth-canvas[hidden] { display: none !important; }
+.compat-studio { padding: clamp(20px, 3.4vw, 46px); background: var(--card); }
+.compat-heading { display: flex; justify-content: space-between; gap: 32px; align-items: end; margin-bottom: 28px; }
+.compat-heading h3 { font: 40px Georgia, serif; margin-bottom: 0; line-height: 1.1; }
+.compat-heading p { max-width: 410px; margin-bottom: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.compat-heading .stage { margin-bottom: 12px; }
+.compat-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 19px 27px; }
+.compat-fields label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; font-weight: 760; letter-spacing: .03em; }
+.compat-fields .compat-full { grid-column: 1 / -1; }
+.compat-fields select, .compat-fields textarea, .compat-fields input[type="text"] {
+  display: block; width: 100%; padding: 12px 13px; background: var(--bg);
+  border: 1px solid var(--line); color: var(--text); border-radius: 5px;
+  font: 14px system-ui, sans-serif; letter-spacing: normal;
+}
+.compat-fields input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+.compat-fields output { float: right; font: 12px monospace; color: var(--accent); }
+.compat-buttons { display: flex; flex-wrap: wrap; gap: 11px; margin: 30px 0 12px; }
+.compat-buttons button { cursor: pointer; border-radius: 5px; }
+.compat-buttons button:disabled { opacity: .45; cursor: not-allowed; }
+#compat-status { font-size: 13px; color: var(--accent); margin: 12px 0; }
+.compat-note { color: var(--muted); font-size: 12px; margin: 16px 0 0; }
+@media (max-width: 700px) {
+  .compat-heading { flex-direction: column; align-items: start; gap: 12px; }
+  .compat-fields { grid-template-columns: 1fr; }
+}
