@@ -1,0 +1,11 @@
+[workspace]
+members = ["crates/voxanth-core", "crates/voxanth-studio"]
+default-members = ["crates/voxanth-core"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Salvador Guzman"]
+repository = "https://github.com/sguzman/voxanth"
