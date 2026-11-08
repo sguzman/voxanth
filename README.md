@@ -10,6 +10,8 @@
 - Singing tones with vibrato, several adjustable voice profiles, local saved profiles
 - Rust egui studio compiled to WebAssembly, inside a responsive public website
 - Browser audio playback and waveform; no account, remote inference, telemetry, or npm
+- A functional, accessible HTML control surface backed by the same Rust/WASM engine when egui/WebGL2 cannot initialize
+- Explicit loading errors and a GitHub Actions browser smoke test that disables WebGL and verifies actual Rust audio output
 
 **Status:** experimental. **English is the primary language target.** The speech mode is *not* a general-purpose, validated TTS engine. Its pronunciation dictionary is intentionally limited, and unknown words use an explicitly labeled approximate fallback; the output is best understood as a baseline for testing intelligibility. This implementation is formant synthesis, not a detailed branching-tube anatomical simulation.
 
@@ -31,7 +33,7 @@ cargo test -p voxanth-core
 trunk serve
 ```
 
-The studio lives in the homepage. Click **Play** to generate audio; browsers require an interaction to enable sound.
+The studio lives on the homepage. Click **Enable audio** and then **Render & play**; browsers require an interaction to enable sound. If WebGL2 is blocked or egui cannot initialize, the page exposes compatibility controls using the *same* Rust synthesizer, rather than leaving the user on a blank canvas.
 
 ## Approach
 
