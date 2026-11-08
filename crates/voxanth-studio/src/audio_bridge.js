@@ -42,7 +42,6 @@ export function downloadAudio(samples, sampleRate, filename) {
 }
 
 export function loadProfiles() {
-  document.getElementById("studio-loading")?.remove();
   try { return localStorage.getItem(storageKey) || "[]"; }
   catch (_) { return "[]"; }
 }
@@ -56,4 +55,21 @@ export function isDarkMode() {
   const preference = document.documentElement.dataset.theme || "system";
   return preference === "dark" ||
     (preference === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+}
+
+/** Called from the first actual egui frame, not merely the WASM loader. */
+export function markStudioReady() {
+  document.documentElement.dataset.voxanthStudio = "ready";
+  const loading = document.getElementById("studio-loading");
+  if (loading) loading.hidden = true;
+  const fallback = document.getElementById("studio-fallback");
+  if (fallback) fallback.hidden = true;
+}
+
+/** Keep startup failures visible and route to GPU-independent Rust controls. */
+export function reportStudioError(message) {
+  console.error("[Voxanth studio]", message);
+  window.dispatchEvent(new CustomEvent("VoxanthStudioError", {
+    detail: { message: String(message) }
+  }));
 }
