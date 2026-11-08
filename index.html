@@ -8,6 +8,7 @@
   <title>Voxanth — A Laboratory for Synthetic Voice</title>
   <link data-trunk rel="css" href="styles.css">
   <link data-trunk rel="rust" href="Cargo.toml">
+  <link data-trunk rel="copy-file" href="fallback.js">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -93,7 +94,34 @@
           <div class="studio-bar-left"><span class="small-signal" aria-hidden="true"></span><b>VOXANTH / STUDIO</b><span>EXPERIMENT 001</span></div>
           <button id="unlock-audio" class="audio-enable" type="button">◉ &nbsp;Enable audio</button>
         </div>
-        <div id="studio-loading" role="status">Initializing Rust/WASM laboratory… If this remains visible, check your browser's WebGL support.</div>
+        <div id="studio-loading" role="status" aria-live="polite">Initializing the Rust/WASM studio…</div>
+        <section id="studio-fallback" class="compat-studio" aria-label="Voice laboratory compatibility controls" hidden>
+          <div class="compat-heading">
+            <div><span class="stage current">COMPATIBILITY MODE · RUST/WASM</span><h3>Voice laboratory</h3></div>
+            <p id="compat-reason">The graphics interface is unavailable, so these browser controls use the same Rust synthesis engine.</p>
+          </div>
+          <div class="compat-fields">
+            <label>Mode <select id="compat-mode"><option value="vowel">Formant vowel</option><option value="speech">English speech</option><option value="singing">Singing</option></select></label>
+            <label>Vowel <select id="compat-vowel"><option>A</option><option>E</option><option>I</option><option>O</option><option>U</option></select></label>
+            <label class="compat-full">Speech phrase <textarea id="compat-text" rows="2">Hello world!</textarea></label>
+            <label class="compat-full">Voice profile <select id="compat-profile"><option value="">Custom voice</option></select></label>
+            <label>Pitch <output id="compat-pitch-value">150 Hz</output><input id="compat-pitch" type="range" min="65" max="450" value="150"></label>
+            <label>Formant scale <output id="compat-formant-value">1.04</output><input id="compat-formant" type="range" min="0.65" max="1.6" step=".01" value="1.04"></label>
+            <label>Brightness <output id="compat-brightness-value">0.65</output><input id="compat-brightness" type="range" min="0" max="1" step=".01" value="0.65"></label>
+            <label>Breathiness <output id="compat-breath-value">0.06</output><input id="compat-breath" type="range" min="0" max="1" step=".01" value="0.06"></label>
+            <label>Nasality <output id="compat-nasal-value">0.08</output><input id="compat-nasal" type="range" min="0" max="1" step=".01" value="0.08"></label>
+            <label>Vibrato <output id="compat-vibrato-value">0.00</output><input id="compat-vibrato" type="range" min="0" max="1" step=".01" value="0"></label>
+            <label>Speech speed <output id="compat-speed-value">1.00</output><input id="compat-speed" type="range" min=".5" max="1.6" step=".01" value="1"></label>
+            <label>Profile name <input id="compat-name" type="text" maxlength="60" value="Clarity / speech"></label>
+          </div>
+          <div class="compat-buttons">
+            <button id="compat-play" type="button" class="button primary">▶ Render &amp; play</button>
+            <button id="compat-export" type="button" class="button secondary" disabled>Download WAV</button>
+            <button id="compat-save" type="button" class="button secondary">Save profile</button>
+          </div>
+          <p id="compat-status" role="status" aria-live="polite">Initializing Rust engine…</p>
+          <p class="compat-note">English pronunciation is experimental. Profiles stay on this device and are compatible with the egui studio.</p>
+        </section>
         <canvas id="voxanth-canvas" aria-label="Interactive Voxanth voice synthesis studio" tabindex="0"></canvas>
         <div class="studio-footer"><span>RENDER ENGINE: FORMANT / SOURCE-FILTER</span><span>PROFILES STORED ON THIS DEVICE</span><span>NO CLOUD INFERENCE</span></div>
       </div>
@@ -153,5 +181,6 @@
       });
     })();
   </script>
+  <script src="./fallback.js" defer></script>
 </body>
 </html>
