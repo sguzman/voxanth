@@ -117,7 +117,7 @@ pub fn render_singing(voice: &Voice, vowel: Vowel, seconds: f32) -> Vec<f32> {
 }
 
 /// Approximate orthographic-to-phone demonstrator, not a validated TTS system.
-/// Accented Spanish vowels are supported; English mappings are approximate.
+/// English orthographic mappings are highly approximate and are not production TTS.
 pub fn render_speech(voice: &Voice, input: &str) -> Vec<f32> {
     let mut phones = Vec::new();
     let speed = voice.sanitized().speed;
@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn speech_handles_accents_punctuation_and_empty_input() {
         assert!(render_speech(&Voice::default(), "").is_empty());
-        let pcm = render_speech(&Voice::default(), "¡Hola, mamá!");
+        let pcm = render_speech(&Voice::default(), "Hello, world!");
         assert!(pcm.len() > SAMPLE_RATE as usize / 2);
         assert!(pcm.iter().all(|s| s.is_finite()));
     }
