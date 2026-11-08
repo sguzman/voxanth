@@ -5,6 +5,9 @@
 //! a deliberately limited text-to-sound front-end, suitable for exploration.
 
 use serde::{Deserialize, Serialize};
+
+pub mod english;
+mod speech_dsp;
 use std::f32::consts::PI;
 
 pub const SAMPLE_RATE: u32 = 44_100;
@@ -116,51 +119,13 @@ pub fn render_singing(voice: &Voice, vowel: Vowel, seconds: f32) -> Vec<f32> {
     render_vowel(&singer, vowel, seconds)
 }
 
-/// Approximate orthographic-to-phone demonstrator, not a validated TTS system.
-/// English orthographic mappings are highly approximate and are not production TTS.
+/// Synthesizes a bounded English phoneme transcription.
+///
+/// Lexicon coverage is intentionally small. Use `english::transcribe` to
+/// inspect heuristic fallback words rather than assuming every pronunciation
+/// is correct.
 pub fn render_speech(voice: &Voice, input: &str) -> Vec<f32> {
-    let mut phones = Vec::new();
-    let speed = voice.sanitized().speed;
-    let chars: Vec<char> = input.to_lowercase().chars().take(100).collect();
-    let mut i = 0;
-    while i < chars.len() {
-        let c = chars[i];
-        let next = chars.get(i + 1).copied();
-        if c == 'c' && next == Some('h') {
-            phones.push((Phone::Fricative, 0.12 / speed)); i += 2; continue;
-        }
-        if c == 'q' && next == Some('u') {
-            phones.push((Phone::Stop, 0.065 / speed)); i += 2; continue;
-        }
-        let phone = match c {
-            'a' | 'á' | 'à' => Some(Phone::Vowel(Vowel::A)),
-            'e' | 'é' | 'è' => Some(Phone::Vowel(Vowel::E)),
-            'i' | 'í' | 'ì' | 'y' => Some(Phone::Vowel(Vowel::I)),
-            'o' | 'ó' | 'ò' => Some(Phone::Vowel(Vowel::O)),
-            'u' | 'ú' | 'ü' | 'ù' | 'w' => Some(Phone::Vowel(Vowel::U)),
-            's' | 'f' | 'z' | 'j' | 'x' => Some(Phone::Fricative),
-            'm' | 'n' | 'ñ' => Some(Phone::Nasal),
-            'l' | 'r' => Some(Phone::Liquid),
-            'b' | 'v' | 'd' | 'g' | 'p' | 't' | 'k' | 'c' => Some(Phone::Stop),
-            ' ' | ',' | '.' | '!' | '?' | '¿' | '¡' | ';' | ':' | '\n' => Some(Phone::Pause),
-            'h' => None,
-            _ => None,
-        };
-        if let Some(phone) = phone {
-            let secs = match phone {
-                Phone::Vowel(_) => 0.165,
-                Phone::Fricative => 0.115,
-                Phone::Nasal => 0.105,
-                Phone::Liquid => 0.085,
-                Phone::Stop => 0.070,
-                Phone::Pause => 0.085,
-            };
-            phones.push((phone, secs / speed));
-        }
-        i += 1;
-        if phones.len() >= 140 { break; }
-    }
-    render_sequence(voice, &phones)
+    speech_dsp::render(voice, &english::transcribe(input))
 }
 
 fn render_sequence(voice: &Voice, sequence: &[(Phone, f32)]) -> Vec<f32> {
