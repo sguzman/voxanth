@@ -95,7 +95,6 @@ pub fn start() {
             Box::new(|_| Ok(Box::new(Studio::new()))),
         ).await {
             Ok(()) => {
-                mark_studio_ready();
                 // WebRunner needs to live for the lifetime of the page.
                 std::mem::forget(runner);
             }
@@ -128,6 +127,7 @@ struct Studio {
     json_editor: String,
     show_json: bool,
     continuous_preview: bool,
+    first_frame: bool,
 }
 
 impl Studio {
@@ -143,6 +143,7 @@ impl Studio {
             text: "Hello world".into(), saved, samples: Vec::new(),
             status: "Choose a sound, then select Render & play.".into(),
             json_editor: String::new(), show_json: false, continuous_preview: false,
+            first_frame: true,
         }
     }
 
@@ -288,6 +289,10 @@ impl Studio {
 
 impl eframe::App for Studio {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        if self.first_frame {
+            self.first_frame = false;
+            mark_studio_ready();
+        }
         let visuals = if is_dark_mode() { egui::Visuals::dark() } else { egui::Visuals::light() };
         ui.ctx().set_visuals(visuals);
         egui::ScrollArea::vertical().id_salt("voxanth-studio-scroll").show(ui, |ui| {
