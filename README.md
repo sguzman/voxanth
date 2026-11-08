@@ -5,12 +5,12 @@
 ## First prototype
 
 - Pure Rust formant/source-filter synthesizer with five vowels and voice timbre controls
-- Experimental text-to-sound mode with approximate Spanish/English letter-to-phone mapping
+- Experimental text-to-sound mode with crude English orthographic mapping (not yet intelligible TTS)
 - Singing tones with vibrato, several adjustable voice profiles, local saved profiles
 - Rust egui studio compiled to WebAssembly, inside a responsive public website
 - Browser audio playback and waveform; no account, remote inference, telemetry, or npm
 
-**Status:** experimental. The speech mode is *not* a general-purpose, validated TTS engine. Its phonetic rules are intentionally limited; its output is best understood as a baseline for testing intelligibility. This implementation is formant synthesis, not a detailed branching-tube anatomical simulation.
+**Status:** experimental. **English is the primary language target.** The speech mode is *not* a general-purpose, validated TTS engine. Its phonetic rules are intentionally limited; its output is best understood as a baseline for testing intelligibility. This implementation is formant synthesis, not a detailed branching-tube anatomical simulation.
 
 ## Repository
 
@@ -34,7 +34,7 @@ The studio lives in the homepage. Click **Play** to generate audio; browsers req
 
 ## Approach
 
-Voice parameters are serialized locally. We intend to progressively replace simple orthographic parsing with language-specific phonemizers, better consonant articulation and coarticulation, prosodic phrasing, and blind transcription tests. Audio is generated on-device.
+Voice parameters are serialized locally. English phonemization, consonant articulation, coarticulation, prosodic phrasing, and intelligibility benchmarks are the primary speech-development goals. Other languages are out of scope for the initial intelligible-speech milestone. We intend to progressively replace simple orthographic parsing with a proper English phonemizer and blind transcription tests. Audio is generated on-device.
 
 ## License
 
