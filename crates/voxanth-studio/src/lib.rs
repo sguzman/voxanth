@@ -239,7 +239,23 @@ impl eframe::App for Studio {
                     ui.label("Text-to-sound / phonetic demonstrator");
                     ui.add(egui::TextEdit::multiline(&mut self.text)
                         .desired_rows(2).hint_text("Try: Hello world / voice / hello"));
-                    ui.label(RichText::new("Experimental English text-to-sound rules. Not yet reliable intelligible speech, especially for consonants.").small().color(Color32::from_rgb(197, 137, 74)));
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label(RichText::new("TRY:").small().weak());
+                        for example in ["Hello world!", "Can you hear my voice?", "We are making sound."] {
+                            if ui.small_button(example).clicked() { self.text = example.into(); }
+                        }
+                    });
+                    let transcription = voxanth_core::english::transcribe(&self.text);
+                    ui.collapsing("Phoneme transcription (English / ARPAbet)", |ui| {
+                        ui.label(RichText::new(transcription.readable()).monospace().small());
+                    });
+                    if !transcription.fallback_words.is_empty() {
+                        ui.label(RichText::new(format!(
+                            "Approximate pronunciation for: {}",
+                            transcription.fallback_words.join(", ")
+                        )).small().color(Color32::from_rgb(197, 137, 74)));
+                    }
+                    ui.label(RichText::new("Experimental English phoneme synthesis. Lexicon limited; natural and intelligible speech remain research goals.").small().weak());
                 }
                 Mode::Formant | Mode::Singing => {
                     ui.label("Select a sustained vowel");
