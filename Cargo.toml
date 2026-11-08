@@ -20,7 +20,7 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElement", "Element", "console"] }
 
 [workspace]
-members = ["crates/voxanth-core"]
+members = ["crates/voxanth-core", "crates/voxanth-web-audio"]
 resolver = "2"
 
 [workspace.package]
