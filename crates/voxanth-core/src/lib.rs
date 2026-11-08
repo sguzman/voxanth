@@ -190,15 +190,17 @@ fn render_sequence(voice: &Voice, sequence: &[(Phone, f32)]) -> Vec<f32> {
             Filter::bandpass(formants[1] * p.formant_scale, 130.0),
             Filter::bandpass(formants[2] * p.formant_scale, 230.0),
         ];
+        let harmonic_weights: [f32; 16] = std::array::from_fn(|i| {
+            1.0 / ((i + 1) as f32).powf(1.35 - p.brightness * 0.45)
+        });
         for n in 0..len {
             let t = tick as f32 / SAMPLE_RATE as f32;
             let vibrato = 1.0 + 0.018 * p.vibrato * (TAU * 5.2 * t).sin();
             phase = (phase + p.pitch_hz * vibrato / SAMPLE_RATE as f32).fract();
             // Compact harmonic source. Each partial is attenuated with frequency.
             let mut harmonic = 0.0;
-            for k in 1..=16 {
-                let h = k as f32;
-                harmonic += (TAU * phase * h).sin() / h.powf(1.35 - p.brightness * 0.45);
+            for (k, weight) in harmonic_weights.iter().enumerate() {
+                harmonic += (TAU * phase * (k + 1) as f32).sin() * weight;
             }
             noise_state ^= noise_state << 13;
             noise_state ^= noise_state >> 17;
