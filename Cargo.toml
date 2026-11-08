@@ -21,7 +21,6 @@ web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElemen
 
 [workspace]
 members = ["crates/voxanth-core"]
-default-members = ["crates/voxanth-core"]
 resolver = "2"
 
 [workspace.package]
