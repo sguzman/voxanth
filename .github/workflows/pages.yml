@@ -101,6 +101,49 @@ jobs:
             echo "FAIL: studio failure didn't activate compatibility UI"
             exit 1
           }
+      - name: Install Firefox Developer Edition
+        id: firefox
+        uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest-devedition
+      - name: Install geckodriver
+        uses: browser-actions/setup-geckodriver@latest
+      - name: Verify standalone audio in Firefox with egui blocked
+        env:
+          FIREFOX_BIN: ${{ steps.firefox.outputs.firefox-path }}
+        run: |
+          set -euo pipefail
+          "$FIREFOX_BIN" --version
+          python3 -m http.server 8876 --bind 127.0.0.1 --directory /tmp/voxanth-preview > /tmp/voxanth-firefox-server.log 2>&1 &
+          SERVER_PID=$!
+          geckodriver --port 4444 > /tmp/voxanth-geckodriver.log 2>&1 &
+          GECKO_PID=$!
+          trap 'kill "$SERVER_PID" "$GECKO_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 15); do
+            if curl -fsS http://127.0.0.1:4444/status >/dev/null; then break; fi
+            sleep 1
+          done
+          PAYLOAD=$(jq -nc --arg binary "$FIREFOX_BIN"             '{capabilities:{alwaysMatch:{browserName:"firefox","moz:firefoxOptions":{binary:$binary,args:["-headless"]}}}}')
+          SESSION=$(curl -fsS -H "Content-Type: application/json"             -d "$PAYLOAD" http://127.0.0.1:4444/session | jq -r '.value.sessionId')
+          test "$SESSION" != "null" && test -n "$SESSION"
+          trap 'curl -fsS -X DELETE "http://127.0.0.1:4444/session/$SESSION" >/dev/null 2>&1 || true; kill "$SERVER_PID" "$GECKO_PID" 2>/dev/null || true' EXIT
+          curl -fsS -H "Content-Type: application/json"             -d '{"url":"http://127.0.0.1:8876/voxanth/?voxanth-smoke=1"}'             "http://127.0.0.1:4444/session/$SESSION/url" >/dev/null
+          SCRIPT='{"script":"return {smoke:document.documentElement.dataset.voxanthSmoke,mode:document.documentElement.dataset.voxanthStudio,engine:typeof window.voxanthAudioRender};","args":[]}'
+          PASS=0
+          for attempt in $(seq 1 30); do
+            RESULT=$(curl -fsS -H "Content-Type: application/json" -d "$SCRIPT"               "http://127.0.0.1:4444/session/$SESSION/execute/sync")
+            echo "$RESULT"
+            if echo "$RESULT" | jq -e '.value | .smoke=="passed" and .mode=="compatibility" and .engine=="function"' >/dev/null; then
+              PASS=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$PASS" != "1" ]; then
+            echo "Firefox Developer Edition could not load independent Rust audio"
+            cat /tmp/voxanth-geckodriver.log
+            exit 1
+          fi
       - name: Configure Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
