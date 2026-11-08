@@ -15,7 +15,7 @@
 ## Repository
 
 - `crates/voxanth-core`: portable synthesis code, tests, no browser dependencies
-- `crates/voxanth-studio`: egui/WASM studio, browser audio bridge, presets
+- `Cargo.toml` + `crates/voxanth-studio/src`: root egui/WASM application, browser audio bridge and presets
 - `index.html` + `styles.css`: public presentation and embedded studio
 - `.github/workflows/pages.yml`: tests, WASM build, Pages publication
 

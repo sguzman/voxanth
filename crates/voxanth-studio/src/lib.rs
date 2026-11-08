@@ -6,7 +6,7 @@ use voxanth_core::{render_singing, render_speech, render_vowel, Voice, Vowel, SA
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-#[wasm_bindgen(module = "/src/audio_bridge.js")]
+#[wasm_bindgen(module = "/crates/voxanth-studio/src/audio_bridge.js")]
 extern "C" {
     #[wasm_bindgen(js_name = playAudio)]
     fn play_audio(samples: &[f32], sample_rate: u32);
