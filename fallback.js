@@ -85,13 +85,13 @@
     $("studio-loading").hidden = true;
     $("compat-reason").textContent = message ||
       "The graphics interface could not start. These controls use the same Rust voice synthesis engine.";
-    status.textContent = typeof window.wasmBindings?.render_preview === "function"
+    status.textContent = typeof window.voxanthAudioRender === "function"
       ? "Rust synthesizer ready. Select a mode and press Render & play."
       : "The Rust module is not available. Check WebAssembly support or reload the page.";
   }
 
   function renderSamples() {
-    const render = window.wasmBindings?.render_preview;
+    const render = window.voxanthAudioRender;
     if (typeof render !== "function") {
       throw new Error("The Rust/WebAssembly synthesizer has not loaded.");
     }
@@ -191,21 +191,18 @@
     showFallback(event.detail?.message || "The graphics studio could not initialize.");
   });
 
-  window.addEventListener("TrunkApplicationStarted", () => {
-    // Query-triggered smoke test used by CI; normal visitors do not run it.
-    if (new URLSearchParams(location.search).has("voxanth-smoke")) {
-      try {
-        const samples = window.wasmBindings.render_preview(
-          "vowel", "A", "", 150, 1, .65, .06, .08, 0, 1
-        );
-        root.dataset.voxanthSmoke = samples.length > 3000 &&
-          samples.some(value => Math.abs(value) > .001)
-            ? "passed" : "failed";
-      } catch (error) {
-        root.dataset.voxanthSmoke = "failed";
-        console.error("Rust engine smoke test:", error);
-      }
+  window.addEventListener("VoxanthAudioReady", () => {
+    if (root.dataset.voxanthStudio === "compatibility") {
+      status.textContent = "Independent Rust synthesizer ready. Choose a mode and press Render & play.";
     }
+  });
+  window.addEventListener("VoxanthAudioError", event => {
+    const message = event.detail?.message || "The standalone Rust audio engine did not load.";
+    console.error("[Voxanth] Audio engine initialization failed:", message);
+    showFallback("Rust audio startup failed: " + message);
+    status.textContent = "Audio engine error: " + message;
+  });
+  window.addEventListener("TrunkApplicationStarted", () => {
     if (root.dataset.voxanthStudio === "compatibility") {
       showFallback($("compat-reason").textContent);
     }
