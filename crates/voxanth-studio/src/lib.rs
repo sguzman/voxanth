@@ -293,8 +293,38 @@ impl eframe::App for Studio {
             self.first_frame = false;
             mark_studio_ready();
         }
-        let visuals = if is_dark_mode() { egui::Visuals::dark() } else { egui::Visuals::light() };
-        ui.ctx().set_visuals(visuals);
+        // Updating only Context visuals here does not guarantee that the
+        // already-created root Ui inherits them in the current frame.
+        // Apply the palette to both and paint an opaque canvas background.
+        let dark = is_dark_mode();
+        let canvas = if dark { Color32::from_rgb(23, 39, 43) }
+            else { Color32::from_rgb(250, 252, 248) };
+        let foreground = if dark { Color32::from_rgb(232, 242, 236) }
+            else { Color32::from_rgb(28, 49, 50) };
+        let mut visuals = if dark { egui::Visuals::dark() } else { egui::Visuals::light() };
+        visuals.override_text_color = Some(foreground);
+        visuals.panel_fill = canvas;
+        visuals.window_fill = canvas;
+        visuals.extreme_bg_color = if dark { Color32::from_rgb(16, 30, 33) }
+            else { Color32::from_rgb(239, 245, 241) };
+        visuals.widgets.noninteractive.fg_stroke.color = foreground;
+        visuals.widgets.inactive.fg_stroke.color = foreground;
+        visuals.widgets.hovered.fg_stroke.color = foreground;
+        visuals.widgets.active.fg_stroke.color = foreground;
+        visuals.widgets.noninteractive.bg_fill = canvas;
+        visuals.widgets.inactive.bg_fill = if dark { Color32::from_rgb(37, 59, 61) }
+            else { Color32::from_rgb(237, 246, 242) };
+        visuals.widgets.hovered.bg_fill = if dark { Color32::from_rgb(53, 80, 80) }
+            else { Color32::from_rgb(213, 236, 229) };
+        visuals.selection.bg_fill = if dark { Color32::from_rgb(31, 123, 117) }
+            else { Color32::from_rgb(117, 205, 187) };
+        ui.ctx().set_visuals(visuals.clone());
+        ui.style_mut().visuals = visuals;
+        ui.style_mut().spacing.item_spacing = egui::vec2(10.0, 11.0);
+        ui.style_mut().spacing.button_padding = egui::vec2(12.0, 7.0);
+        ui.style_mut().text_styles.insert(egui::TextStyle::Body, egui::FontId::proportional(15.5));
+        ui.style_mut().text_styles.insert(egui::TextStyle::Small, egui::FontId::proportional(12.5));
+        ui.painter().rect_filled(ui.max_rect(), 0.0, canvas);
         egui::ScrollArea::vertical().id_salt("voxanth-studio-scroll").show(ui, |ui| {
             ui.add_space(12.0);
             ui.heading(RichText::new("Design a voice. Hear every decision.").size(24.0));
