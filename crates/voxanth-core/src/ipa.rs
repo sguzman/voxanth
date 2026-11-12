@@ -222,19 +222,19 @@ pub fn render(voice: &Voice, input: &str) -> Result<Vec<f32>, String> {
             noise_state ^= noise_state << 5;
             let hiss = noise_state as f32 / u32::MAX as f32 * 2. - 1.;
             let (closure, burst) = if matches!(sound.kind, Kind::Stop{..} | Kind::Affricate{..}) {
-                (if progress < .50 { 0.0 } else { 1.0 },
-                 if progress >= .50 && progress < .72 { 1.0 } else { .10 })
+                (if progress < 0.50 { 0.0 } else { 1.0 },
+                 if progress >= 0.50 && progress < 0.72 { 1.0 } else { 0.10 })
             } else { (1.0, 1.0) };
             let input = harmonic * voiced * closure + hiss * noise * burst;
             let filtered = bands[0].tick(input) * 1.8
                 + bands[1].tick(input) * (0.75 + voice.brightness * 0.4)
                 + bands[2].tick(input) * (0.33 + voice.brightness * 0.6);
             let airy = if matches!(sound.kind, Kind::Fricative{..} | Kind::Affricate{..}) {
-                hiss * noise * .23
+                hiss * noise * 0.23
             } else { 0.0 };
-            let fade_in = (n as f32 / (SAMPLE_RATE as f32 * .008)).min(1.);
-            let fade_out = ((len - n) as f32 / (SAMPLE_RATE as f32 * .008)).min(1.);
-            let sample = ((filtered * (1. - nasal) + harmonic * nasal * .045 + airy)
+            let fade_in = (n as f32 / (SAMPLE_RATE as f32 * 0.008)).min(1.);
+            let fade_out = ((len - n) as f32 / (SAMPLE_RATE as f32 * 0.008)).min(1.);
+            let sample = ((filtered * (1. - nasal) + harmonic * nasal * 0.045 + airy)
                 * 1.8 * fade_in * fade_out).tanh();
             output.push(if sample.is_finite() { sample } else { 0.0 });
         }
@@ -258,7 +258,7 @@ mod tests {
             let audio = render(&Voice::default(), ipa).unwrap();
             assert!(audio.len() > 6000, "{ipa}");
             assert!(audio.iter().all(|v| v.is_finite() && v.abs() <= 1.), "{ipa}");
-            assert!(audio.iter().any(|v| v.abs() > .001), "{ipa}");
+            assert!(audio.iter().any(|v| v.abs() > 0.001), "{ipa}");
         }
     }
     #[test]
@@ -267,7 +267,7 @@ mod tests {
         for ipa in CONSONANTS {
             assert!(is_supported(ipa), "{ipa}");
             let audio = render(&Voice::default(), ipa).unwrap();
-            assert!(audio.iter().any(|v| v.abs() > .001), "{ipa}");
+            assert!(audio.iter().any(|v| v.abs() > 0.001), "{ipa}");
         }
     }
     #[test]
