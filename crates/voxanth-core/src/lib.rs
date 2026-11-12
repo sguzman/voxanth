@@ -7,6 +7,7 @@
 use serde::{Deserialize, Serialize};
 
 pub mod english;
+pub mod ipa;
 mod speech_dsp;
 use std::f32::consts::PI;
 

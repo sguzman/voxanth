@@ -10,6 +10,9 @@
 - Singing tones with vibrato, several adjustable voice profiles, local saved profiles
 - Rust egui studio compiled to WebAssembly, inside a responsive public website
 - Browser audio playback and waveform; no account, remote inference, telemetry, or npm
+- High-contrast light/dark studio and a separate, keyboard-accessible IPA soundboard
+- **All 28 basic IPA monophthong symbols** with distinct approximate formant targets; 24 modeled English pulmonic consonants and affricates, with unsupported symbols explicitly marked
+- Compose IPA sequences such as `/hɛloʊ/`, `/kæt/`, or `/iː/`, play them with the standalone Rust/WASM audio engine, and export WAV (not a phonetic reference recording)
 - A functional, accessible HTML control surface backed by the same Rust/WASM engine when egui/WebGL2 cannot initialize
 - Explicit loading errors and a GitHub Actions browser smoke test that disables WebGL and verifies actual Rust audio output
 
@@ -17,9 +20,9 @@
 
 ## Repository
 
-- `crates/voxanth-core`: portable synthesis code, including `english.rs` (pronunciation) and `speech_dsp.rs` (experimental phoneme rendering), with tests
+- `crates/voxanth-core`: portable synthesis code, including `english.rs` (English orthography), `speech_dsp.rs` (phoneme rendering), and `ipa.rs` (28 IPA vowels plus 24 consonants), with tests
 - `Cargo.toml` + `crates/voxanth-studio/src`: root egui/WASM application, browser audio bridge and presets
-- `index.html` + `styles.css`: public presentation and embedded studio
+- `index.html` + `styles.css` + `ipa-widget.js`: accessible IPA chart, audio workbench, and embedded egui studio
 - `.github/workflows/pages.yml`: tests, WASM build, Pages publication
 
 ## Run
@@ -42,3 +45,7 @@ Voice parameters are serialized locally. The first English lexicon and phone ren
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## IPA accuracy and limitations
+
+The IPA soundboard references the [official IPA chart](https://www.internationalphoneticassociation.org/content/chart). Its 28 basic vowel targets are **approximate acoustic formants**; their actual sounds depend on pitch, speaker anatomy, and language. They are not calibrated reference recordings. The first 24 consonant/affricate sounds are also approximations from a simplified source-filter model, and isolated consonants are auditioned with /ə/ afterward for audibility. Unmodeled symbols are visibly disabled or produce errors in the IPA input; there is no silent substitution. The implementation does not yet model all IPA consonants, clicks, ejectives, tone, diacritics, or allophonic detail.

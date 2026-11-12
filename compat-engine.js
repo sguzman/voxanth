@@ -5,6 +5,7 @@
     const module = await import("./engine/voxanth_web_audio.js");
     await module.default(new URL("./engine/voxanth_web_audio_bg.wasm", import.meta.url));
     window.voxanthAudioRender = module.render_preview;
+    window.voxanthIpaRender = module.render_ipa;
     window.voxanthAudioRate = module.sample_rate();
     if (new URLSearchParams(location.search).has("voxanth-smoke")) {
       try {

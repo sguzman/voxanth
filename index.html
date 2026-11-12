@@ -10,6 +10,7 @@
   <link data-trunk rel="rust" href="Cargo.toml">
   <link data-trunk rel="copy-file" href="fallback.js">
   <link data-trunk rel="copy-file" href="compat-engine.js">
+  <link data-trunk rel="copy-file" href="ipa-widget.js">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -95,6 +96,55 @@
           <div class="studio-bar-left"><span class="small-signal" aria-hidden="true"></span><b>VOXANTH / STUDIO</b><span>EXPERIMENT 001</span></div>
           <button id="unlock-audio" class="audio-enable" type="button">◉ &nbsp;Enable audio</button>
         </div>
+        <section class="ipa-lab" id="ipa-lab" aria-labelledby="ipa-title">
+          <div class="ipa-intro">
+            <div>
+              <span class="ipa-kicker">PHONETICS / INTERACTIVE SOUNDBOARD</span>
+              <h3 id="ipa-title">The IPA laboratory <span>↗</span></h3>
+              <p>Click a symbol to hear an experimental synthetic realization. Combine sounds into an IPA sequence and render them locally in Rust.</p>
+            </div>
+            <div class="ipa-engine-pill" id="ipa-engine-pill" role="status">Connecting audio engine…</div>
+          </div>
+          <div class="ipa-tabs" role="tablist" aria-label="IPA sound category">
+            <button id="ipa-tab-vowels" type="button" role="tab" aria-selected="true" aria-controls="ipa-panel-vowels" class="selected">Vowels <span>28</span></button>
+            <button id="ipa-tab-consonants" type="button" role="tab" aria-selected="false" aria-controls="ipa-panel-consonants">Consonants <span>24 playable</span></button>
+          </div>
+          <div class="ipa-chart-area" id="ipa-panel-vowels" role="tabpanel" aria-labelledby="ipa-tab-vowels">
+            <div class="ipa-vowel-head"><span>TONGUE HEIGHT</span><span>FRONT</span><span>CENTRAL</span><span>BACK</span></div>
+            <div id="ipa-vowel-grid" class="ipa-vowel-grid" aria-label="Complete basic IPA vowel chart"></div>
+            <p class="ipa-help">Pairs show unrounded / rounded vowels. Every vowel button has a separate approximate formant target.</p>
+          </div>
+          <div class="ipa-chart-area" id="ipa-panel-consonants" role="tabpanel" aria-labelledby="ipa-tab-consonants" hidden>
+            <p class="ipa-help">Playable consonants use an early source-filter model. Isolated consonants are played with /ə/ afterward so stops are audible. This is not yet a faithful articulatory model.</p>
+            <div id="ipa-consonant-grid" class="ipa-consonant-grid"></div>
+            <details class="ipa-unmodeled"><summary>Other pulmonic IPA consonants (not modeled yet)</summary><div id="ipa-unsupported-grid" class="ipa-unsupported-grid"></div></details>
+          </div>
+          <div class="ipa-console">
+            <div class="ipa-console-top">
+              <div><span class="ipa-kicker">COMPOSE &amp; AUDITION</span><h4>Phoneme workbench</h4></div>
+              <div id="ipa-selection" class="ipa-selection" aria-live="polite">Selected: /i/ · close front unrounded vowel</div>
+            </div>
+            <div class="ipa-editor-row">
+              <label for="ipa-input">IPA sequence</label>
+              <div class="ipa-editor-controls"><button id="ipa-backspace" type="button" title="Remove last IPA symbol">⌫</button><button id="ipa-clear" type="button">Clear</button></div>
+            </div>
+            <input id="ipa-input" class="ipa-input" type="text" value="hɛloʊ" spellcheck="false" autocomplete="off" aria-describedby="ipa-notation-note">
+            <p class="ipa-help" id="ipa-notation-note">Try <code>/hɛloʊ/</code>, <code>/kæt/</code> or <code>/iː/</code>. Use the actual IPA characters; unsupported symbols produce an explicit error.</p>
+            <div class="ipa-controls">
+              <label>Voice <select id="ipa-voice"><option value="clarity">Clarity / speech</option></select></label>
+              <label>Pitch <span id="ipa-pitch-value">150 Hz</span><input id="ipa-pitch" type="range" min="65" max="450" value="150"></label>
+              <label>Speed <span id="ipa-speed-value">1.00×</span><input id="ipa-speed" type="range" min=".5" max="1.6" step=".05" value="1"></label>
+            </div>
+            <div class="ipa-actions">
+              <button type="button" class="ipa-play" id="ipa-play"><span aria-hidden="true">▶</span> Pronounce IPA</button>
+              <button type="button" class="ipa-action" id="ipa-export" disabled>Export WAV</button>
+              <button type="button" class="ipa-action" id="ipa-copy">Copy IPA</button>
+              <button type="button" class="ipa-action" id="ipa-try">Try English example</button>
+            </div>
+            <p class="ipa-status" id="ipa-status" role="status" aria-live="polite">Loading the independent Rust/WASM audio synthesizer…</p>
+            <p class="ipa-disclaimer">Approximate acoustic synthesis, not a reference pronunciation recording. Unmodeled sounds are disabled rather than substituted.</p>
+          </div>
+        </section>
         <div id="studio-loading" role="status" aria-live="polite">Initializing the Rust/WASM studio…</div>
         <section id="studio-fallback" class="compat-studio" aria-label="Voice laboratory compatibility controls" hidden>
           <div class="compat-heading">
@@ -183,6 +233,7 @@
     })();
   </script>
   <script src="./fallback.js" defer></script>
+  <script src="./ipa-widget.js" defer></script>
   <script src="./compat-engine.js" type="module"></script>
 </body>
 </html>

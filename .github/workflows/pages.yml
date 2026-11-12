@@ -46,6 +46,7 @@ jobs:
       - name: Check browser JavaScript syntax
         run: |
           node --check fallback.js
+          node --check ipa-widget.js
           node --check --input-type=module < compat-engine.js
           node --check crates/voxanth-studio/src/audio_bridge.js
       - name: Install Chrome for browser smoke tests
@@ -67,11 +68,16 @@ jobs:
           done
           "$CHROME_BIN" --headless=new --no-sandbox --disable-dev-shm-usage \
             --disable-gpu --disable-webgl --virtual-time-budget=15000 \
-            --dump-dom "http://127.0.0.1:8876/voxanth/?voxanth-smoke=1" \
+            --dump-dom "http://127.0.0.1:8876/voxanth/?voxanth-smoke=1&ipa-smoke=1" \
             > /tmp/voxanth-browser.html 2>/tmp/voxanth-chrome.log || {
               cat /tmp/voxanth-chrome.log
               exit 1
             }
+          grep -q 'data-ipa-smoke="passed"' /tmp/voxanth-browser.html || {
+            echo "FAIL: IPA vowel/consonant Rust audio smoke test failed"
+            tail -90 /tmp/voxanth-browser.html
+            exit 1
+          }
           grep -q 'data-voxanth-smoke="passed"' /tmp/voxanth-browser.html || {
             echo "FAIL: Rust DSP sample generation did not run in Chrome"
             tail -90 /tmp/voxanth-browser.html
@@ -87,11 +93,16 @@ jobs:
           mv /tmp/voxanth-preview/voxanth/voxanth-studio-*.js /tmp/voxanth-broken-egui/
           "$CHROME_BIN" --headless=new --no-sandbox --disable-dev-shm-usage \
             --disable-gpu --disable-webgl --virtual-time-budget=15000 \
-            --dump-dom "http://127.0.0.1:8876/voxanth/?voxanth-smoke=1" \
+            --dump-dom "http://127.0.0.1:8876/voxanth/?voxanth-smoke=1&ipa-smoke=1" \
             > /tmp/voxanth-blocked-studio.html 2>/tmp/voxanth-blocked-studio-chrome.log || {
               cat /tmp/voxanth-blocked-studio-chrome.log
               exit 1
             }
+          grep -q 'data-ipa-smoke="passed"' /tmp/voxanth-blocked-studio.html || {
+            echo "FAIL: IPA soundboard failed when egui was blocked"
+            tail -90 /tmp/voxanth-blocked-studio.html
+            exit 1
+          }
           grep -q 'data-voxanth-smoke="passed"' /tmp/voxanth-blocked-studio.html || {
             echo "FAIL: standalone Rust audio didn't survive a failed egui import"
             tail -90 /tmp/voxanth-blocked-studio.html
@@ -127,13 +138,13 @@ jobs:
           SESSION=$(curl -fsS -H "Content-Type: application/json"             -d "$PAYLOAD" http://127.0.0.1:4444/session | jq -r '.value.sessionId')
           test "$SESSION" != "null" && test -n "$SESSION"
           trap 'curl -fsS -X DELETE "http://127.0.0.1:4444/session/$SESSION" >/dev/null 2>&1 || true; kill "$SERVER_PID" "$GECKO_PID" 2>/dev/null || true' EXIT
-          curl -fsS -H "Content-Type: application/json"             -d '{"url":"http://127.0.0.1:8876/voxanth/?voxanth-smoke=1"}'             "http://127.0.0.1:4444/session/$SESSION/url" >/dev/null
-          SCRIPT='{"script":"return {smoke:document.documentElement.dataset.voxanthSmoke,mode:document.documentElement.dataset.voxanthStudio,engine:typeof window.voxanthAudioRender};","args":[]}'
+          curl -fsS -H "Content-Type: application/json"             -d '{"url":"http://127.0.0.1:8876/voxanth/?voxanth-smoke=1&ipa-smoke=1"}'             "http://127.0.0.1:4444/session/$SESSION/url" >/dev/null
+          SCRIPT='{"script":"return {smoke:document.documentElement.dataset.voxanthSmoke,ipa:document.documentElement.dataset.ipaSmoke,mode:document.documentElement.dataset.voxanthStudio,engine:typeof window.voxanthAudioRender,ipaEngine:typeof window.voxanthIpaRender,vowels:document.querySelectorAll(\"#ipa-vowel-grid button:not([disabled])\").length};","args":[]}'
           PASS=0
           for attempt in $(seq 1 30); do
             RESULT=$(curl -fsS -H "Content-Type: application/json" -d "$SCRIPT"               "http://127.0.0.1:4444/session/$SESSION/execute/sync")
             echo "$RESULT"
-            if echo "$RESULT" | jq -e '.value | .smoke=="passed" and .mode=="compatibility" and .engine=="function"' >/dev/null; then
+            if echo "$RESULT" | jq -e '.value | .smoke=="passed" and .ipa=="passed" and .mode=="compatibility" and .engine=="function" and .ipaEngine=="function" and .vowels==28' >/dev/null; then
               PASS=1
               break
             fi
